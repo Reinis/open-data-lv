@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Models\Record;
 use Generator;
+use Illuminate\Support\Collection;
 use JsonException;
 use RuntimeException;
 
@@ -94,5 +95,39 @@ class APIRecordService implements RecordService
     public function getLastId(): int
     {
         return Record::max('_id') ?? 0;
+    }
+
+    public function searchLatest(string $searchTerm): Collection
+    {
+        return Record::select(
+            [
+                'records._id',
+                'date',
+                'territory_name',
+                'territory_code',
+                'confirmed_cases',
+                'active_cases',
+                'cumulative_cases',
+            ]
+        )
+            ->whereDate('date', Record::max('date'))
+            ->where(
+                'territory_name',
+                'like',
+                '%' . $this->escape_like($searchTerm) . '%'
+            )
+            ->get();
+    }
+
+    /**
+     * Escape special characters for a LIKE query.
+     */
+    private function escape_like(string $value, string $char = '\\'): string
+    {
+        return str_replace(
+            [$char, '%', '_'],
+            [$char . $char, $char . '%', $char . '_'],
+            $value
+        );
     }
 }

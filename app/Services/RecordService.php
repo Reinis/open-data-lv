@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use Generator;
+use Illuminate\Support\Collection;
 
 interface RecordService
 {
@@ -13,4 +14,6 @@ interface RecordService
     public function count(): int;
 
     public function getLastId(): int;
+
+    public function searchLatest(string $searchTerm): Collection;
 }
