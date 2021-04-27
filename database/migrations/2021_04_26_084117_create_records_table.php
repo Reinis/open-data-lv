@@ -13,7 +13,7 @@ class CreateRecordsTable extends Migration
     {
         Schema::create('records', function (Blueprint $table) {
             $table->id();
-            $table->integer('_id');
+            $table->integer('_id')->unique();
             $table->timestamp('date');
             $table->text('territory_name');
             $table->text('territory_code');
