@@ -1,17 +1,17 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Record;
 
+use App\Console\Progress;
 use App\Models\Record;
 use App\Services\RecordService;
 use Illuminate\Console\Command;
 use RuntimeException;
-use Symfony\Component\Console\Helper\ProgressBar;
-use Symfony\Component\Console\Output\ConsoleOutputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
 
 class RecordImport extends Command
 {
+    use Progress;
+
     /**
      * The name and signature of the console command.
      *
@@ -47,26 +47,5 @@ class RecordImport extends Command
         }
 
         return 0;
-    }
-
-    private function getProgressBar(): ProgressBar
-    {
-        $stdErr = $this->getOutput();
-
-        if ($stdErr instanceof ConsoleOutputInterface) {
-            $stdErr = $stdErr->getErrorOutput();
-        }
-
-        $format = 'Progress: [%bar%] %percent:3s%% %message:10s%';
-
-        if ($stdErr->getVerbosity() > OutputInterface::VERBOSITY_NORMAL) {
-            $format .= ' %elapsed:6s%/%estimated:-6s% %memory:6s%';
-        }
-
-        $progressBar = new ProgressBar($stdErr);
-        $progressBar->setFormat($format);
-        $progressBar->setMessage('');
-
-        return $progressBar;
     }
 }

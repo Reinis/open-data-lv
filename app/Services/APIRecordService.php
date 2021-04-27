@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Models\Record;
 use Generator;
 use JsonException;
 use RuntimeException;
@@ -33,9 +34,9 @@ class APIRecordService implements RecordService
     /**
      * @throws JsonException
      */
-    public function getRecords(int $limit): Generator
+    public function getRecords(int $limit, int $offset = 0): Generator
     {
-        $result = $this->fetchPage(null, $limit);
+        $result = $this->fetchPage(null, $offset, $limit);
 
         while (count($result['result']['records']) > 0) {
             $batch = [];
@@ -65,12 +66,13 @@ class APIRecordService implements RecordService
     /**
      * @throws JsonException
      */
-    private function fetchPage(?string $queryString = null, int $limit = 1): array
+    private function fetchPage(?string $queryString = null, int $offset = 0, int $limit = 1): array
     {
         if (null === $queryString) {
             $queryString = "/api/3/action/datastore_search";
             $queryString .= "?resource_id={$this->resourceId}";
             $queryString .= "&sort=_id";
+            $queryString .= "&offset={$offset}";
             $queryString .= "&limit={$limit}";
         }
 
@@ -87,5 +89,10 @@ class APIRecordService implements RecordService
         $result = $this->fetchPage();
 
         return $result['result']['total'];
+    }
+
+    public function getLastId(): int
+    {
+        return Record::max('_id') ?? 0;
     }
 }
