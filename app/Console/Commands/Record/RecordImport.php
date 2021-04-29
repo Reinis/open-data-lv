@@ -6,7 +6,9 @@ use App\Console\Progress;
 use App\Models\Record;
 use App\Services\RecordService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 use RuntimeException;
+use Symfony\Component\Console\Output\OutputInterface;
 
 class RecordImport extends Command
 {
@@ -35,9 +37,17 @@ class RecordImport extends Command
         $progressBar = $this->getProgressBar();
 
         try {
-            $max = ceil($recordService->count() / $limit);
+            $count = $recordService->count();
+            $max = ceil($count / $limit);
 
-            foreach ($progressBar->iterate($recordService->getRecords($limit), $max) as $batch) {
+            if ($count > 100 && $this->getOutput()->getVerbosity() !== OutputInterface::VERBOSITY_DEBUG) {
+                $this->info("Unsetting event dispatcher for bulk import...");
+                DB::connection()->unsetEventDispatcher();
+            }
+
+            $recordData = $recordService->getRecords($limit);
+
+            foreach ($progressBar->iterate($recordData, $max) as $batch) {
                 $progressBar->setMessage(substr(last($batch)['date'], 0, 10));
                 Record::upsert($batch, ['_id'], ['date', 'confirmed_cases', 'active_cases', 'cumulative_cases']);
             }
@@ -45,6 +55,8 @@ class RecordImport extends Command
             $this->error($e->getMessage());
             return 1;
         }
+
+        $this->newLine();
 
         return 0;
     }
