@@ -14,7 +14,7 @@ trait Progress
 {
     private function getProgressBar(): ProgressBar
     {
-        $stdErr = Command::getOutput();
+        $stdErr = $this->getOutput();
 
         if ($stdErr instanceof ConsoleOutputInterface) {
             $stdErr = $stdErr->getErrorOutput();
