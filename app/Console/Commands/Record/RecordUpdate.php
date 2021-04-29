@@ -8,9 +8,10 @@ use App\Services\RecordService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
+use Symfony\Component\Console\Command\SignalableCommandInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class RecordUpdate extends Command
+class RecordUpdate extends Command implements SignalableCommandInterface
 {
     use Progress;
 
@@ -27,6 +28,8 @@ class RecordUpdate extends Command
      * @var string
      */
     protected $description = 'Update records from data.gov.lv';
+
+    private bool $beenSignaled = false;
 
     /**
      * Execute the console command.
@@ -56,6 +59,11 @@ class RecordUpdate extends Command
             foreach ($progressBar->iterate($recordData, $max) as $batch) {
                 $progressBar->setMessage(substr(last($batch)['date'], 0, 10));
                 Record::upsert($batch, ['_id'], ['date', 'confirmed_cases', 'active_cases', 'cumulative_cases']);
+
+                if ($this->beenSignaled) {
+                    $this->info("\nStopping...");
+                    return 2;
+                }
             }
         } catch (RuntimeException $e) {
             $this->error($e->getMessage());
@@ -65,5 +73,15 @@ class RecordUpdate extends Command
         $this->newLine();
 
         return 0;
+    }
+
+    public function getSubscribedSignals(): array
+    {
+        return [SIGINT, SIGTERM];
+    }
+
+    public function handleSignal(int $signal): void
+    {
+        $this->beenSignaled = true;
     }
 }
